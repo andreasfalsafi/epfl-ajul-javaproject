@@ -14,23 +14,33 @@ import java.util.List;
 import java.util.random.RandomGenerator;
 
 
-//créer une classe statique impriquée échantillonneur par réservoir. cette classe choisi aléàeatoirement de prendre la valeur qu'on lui add
-//trouver les coups qui remplissent totalement une ligne de motif
-// 1) LA QTY DE TUILES DE COULEURS
-//2) LA DESTINATION OÛ ELLES VONT
-//3) LA TAILLE QUI RESTE (CAPACITY-SIZE)
-//4) SI QTY==SZELEFT => group1
-//5) si qty < sizeleft => group2
-//6) else group 3
+/**
+ * Sélecteur de coups utilisant une approche heuristique pour le choix du coup à jouer.
+ * Cette classe partitionne les coups valides en trois groupes basés sur leur capacité
+ * à compléter des lignes de motif, afin de favoriser un jeu quasi-aléatoire mais structuré.
+ *
+ * @author morganhauswirth 417840
+ * @author andreasfalsafi 417792
+ */
 public final class HeuristicMoveSelector {
 
+    /**
+     * Échantillonneur par réservoir permettant de sélectionner uniformément un élément
+     * parmi un flux d'éléments de taille inconnue ou dynamique.
+     */
     private static final class ReservoirSampler {
         private int currentElem = -1;
         private int countElem = 0;
 
+
         public ReservoirSampler(){
         }
 
+        /**
+         * Ajoute un élément au réservoir avec une probabilité {@code 1/n}.
+         * @param elem l'index du coup à ajouter
+         * @param random le générateur de nombres aléatoires
+         */
         private void add(int elem, RandomGenerator random){
             countElem++;
             if (random.nextInt(countElem) == 0) {
@@ -47,7 +57,19 @@ public final class HeuristicMoveSelector {
         }
     }
 
-    //todo on peut simplifier en faisant les deux premiers if seulement si on est PAS dans fllor, et tout mettre dans le 3ème sinon.
+    /**
+     * Sélectionne un coup parmi les coups valides fournis.
+     * Le choix se fait en priorité parmi :
+     * 1. Les coups remplissant exactement une ligne de motif.
+     * 2. Les coups remplissant partiellement une ligne de motif.
+     * 3. Les coups déposés sur le plancher ou les coups excédentaires.
+     *
+     * @param random      le générateur de nombres aléatoires
+     * @param gameState   l'état de la partie en lecture seule
+     * @param validMoves  tableau des coups valides empaquetés
+     * @param numValidMoves nombre de coups valides dans le tableau
+     * @return l'index du coup choisi dans le tableau {@code validMoves}
+     */
     public static int selectMove(RandomGenerator random, ReadOnlyGameState gameState, short[] validMoves, int numValidMoves ){
         ReservoirSampler array1 = new ReservoirSampler();
         ReservoirSampler array2 = new ReservoirSampler();
