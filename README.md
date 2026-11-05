@@ -119,10 +119,3 @@ In IntelliJ, right-click the `test` folder → *Run 'All Tests'*.
 
 This is a non-commercial student project made for educational purposes. *Azul* is a trademark of its respective owners (designed by Michael Kiesling, published by Plan B Games / Next Move Games); this project is not affiliated with or endorsed by them.
 
-
-### Running the Application
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/andreasfalsafi/epfl-ajul-javaproject.git
-   cd epfl-ajul-javaproject
