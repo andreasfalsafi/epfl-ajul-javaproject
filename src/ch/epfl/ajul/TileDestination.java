@@ -8,8 +8,8 @@ import java.util.List;
  * Cette interface scellée définit les emplacements de réception des tuiles :
  * les lignes de motif (Pattern) ou la ligne de plancher (Floor).
  * Elle est implémentée par {@link Pattern} et {@link Floor}.
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public sealed interface TileDestination {
 

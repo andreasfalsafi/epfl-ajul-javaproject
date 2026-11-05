@@ -1,6 +1,5 @@
-package ch.epfl.ajul.mytests;
+package ch.epfl.ajul.mcts;
 
-import ch.epfl.ajul.mcts.MctsNode;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,14 +12,12 @@ class MctsNodeTest {
 
         assertEquals(fakeMove, node.pkMove(), "Le coup n'est pas correctement extrait après empaquetage");
         assertEquals(0, node.gameCount(), "Le compteur de parties d'un nouveau nœud doit être 0");
-        assertEquals(0, node.totalPoints(), "Les points d'un nouveau nœud doivent être 0");
 
         // On simule quelques évaluations
         node.registerEvaluation(50);
         node.registerEvaluation(100);
 
         assertEquals(2, node.gameCount(), "Le compteur de parties doit s'incrémenter");
-        assertEquals(150, node.totalPoints(), "Les points doivent s'accumuler");
         assertEquals(75.0, node.averagePoints(), 0.001, "La moyenne doit être en double (150 / 2)");
     }
 
@@ -36,7 +33,7 @@ class MctsNodeTest {
                 MctsNode.newMoveNode((short) 3)
         };
         // Attention : Adapte l'accès aux enfants selon ton implémentation (attribut package-private ou setter)
-//        root.children = children;
+        root.children = children;
 
         // Règle d'optimisation : si gameCount <= nombre d'enfants, 
         // on explore l'index = gameCount - 1

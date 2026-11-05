@@ -16,8 +16,8 @@ import java.util.Objects;
  * @param source      la source des tuiles (fabrique ou centre)
  * @param tileColor   la couleur des tuiles prises
  * @param destination la destination sur le plateau du joueur
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public record Move(TileSource source, TileKind.Colored tileColor, TileDestination destination) {
 

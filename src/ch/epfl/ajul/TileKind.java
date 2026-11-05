@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.random.RandomGenerator;
 
 /**
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  * Représente les différents types de tuiles utilisables dans le jeu.
  * <p>
  * Cette interface est scellée et ne peut être implémentée que par

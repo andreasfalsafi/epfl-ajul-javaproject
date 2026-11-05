@@ -10,8 +10,8 @@ import java.util.List;
 /**
  * Représente un état de partie d'Ajul en lecture seule.
  *
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public interface ReadOnlyGameState {
 

@@ -10,8 +10,8 @@ import java.util.random.RandomGenerator;
  * Classe utilitaire permettant de manipuler des ensembles de tuiles (multisets)
  * empaquetés dans des entiers de type {@code int} (32 bits).
  *
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public final class PkTileSet {
 
@@ -97,7 +97,9 @@ public final class PkTileSet {
         assert isValid(pkTileSet);
 
         int s = pkTileSet + (pkTileSet >>> BITS_PER_COLOR);
-        return (s & MASK) + ((s >>> SHIFT_2_COLORS) & MASK) + ((s >>> (SHIFT_4_COLORS)) & MASK);
+        return (s & MASK)
+                + ((s >>> SHIFT_2_COLORS) & MASK)
+                + ((s >>> (SHIFT_4_COLORS)) & MASK);
     }
 
     /**
@@ -130,26 +132,26 @@ public final class PkTileSet {
      * Ajoute exactement une tuile de la sorte donnée à l'ensemble.
      *
      * @param pkTileSet l'ensemble de tuiles empaqueté initial
-     * @param tilekind  la sorte de tuile à ajouter
+     * @param tileKind  la sorte de tuile à ajouter
      * @return le nouvel ensemble de tuiles empaqueté
      */
-    public static int add(int pkTileSet, TileKind tilekind) {
+    public static int add(int pkTileSet, TileKind tileKind) {
         assert isValid(pkTileSet);
 
-        return pkTileSet + (1 << tilekind.index() * BITS_PER_COLOR);
+        return pkTileSet + tileMask(tileKind);
     }
 
     /**
      * Retire exactement une tuile de la sorte donnée de l'ensemble.
      *
      * @param pkTileSet l'ensemble de tuiles empaqueté initial
-     * @param tilekind  la sorte de tuile à retirer
+     * @param tileKind  la sorte de tuile à retirer
      * @return le nouvel ensemble de tuiles empaqueté
      */
-    public static int remove(int pkTileSet, TileKind tilekind) {
+    public static int remove(int pkTileSet, TileKind tileKind) {
         assert isValid(pkTileSet);
 
-        return pkTileSet - (1 << tilekind.index() * BITS_PER_COLOR);
+        return pkTileSet - tileMask(tileKind);
     }
 
     /**
@@ -209,29 +211,31 @@ public final class PkTileSet {
      */
     public static int sampleColoredInto(int pkTileSet, TileKind.Colored[] destination, int offset, RandomGenerator randomGenerator) {
         assert isValid(pkTileSet);
-
         int sizeReservoir = destination.length - offset;
         int i = 0;
 
-        for (TileKind.Colored color : TileKind.Colored.ALL){
+        for (TileKind.Colored color : TileKind.Colored.ALL) {
             int numTiles = countOf(pkTileSet, color);
-
-            for (int c = 0; c < numTiles; c++){
-                if (i < sizeReservoir){
-
+            for (int c = 0; c < numTiles; c++) {
+                if (i < sizeReservoir) {
                     destination[offset + i] = color;
                 } else {
                     int j = randomGenerator.nextInt(i + 1);
-
                     if (j < sizeReservoir) {
                         destination[offset + j] = color;
                     }
                 }
-
                 i++;
             }
         }
         return offset + i;
+    }
+    /**
+     * Calcule l'entier utilisé pour isoler ou modifier un élément d'une sorte donnée.
+     * Créé pour éviter la duplication de code selon les consignes.
+     */
+    private static int tileMask(TileKind kind) {
+        return 1 << (kind.index() * BITS_PER_COLOR);
     }
 
     /**

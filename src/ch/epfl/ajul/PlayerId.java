@@ -8,8 +8,8 @@ import java.util.List;
  * Ce type énuméré contient les identifiants pour les quatre joueurs possibles
  * ainsi qu'une liste immuable les regroupant tous.
  *
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public enum PlayerId {
     /** Le premier joueur (Joueur 1). */

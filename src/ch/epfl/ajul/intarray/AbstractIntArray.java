@@ -3,8 +3,8 @@ package ch.epfl.ajul.intarray;
 import java.util.Arrays;
 
 /**
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  * Implémentation de base pour un tableau d'entiers en lecture seule.
  * <p>
  * Cette classe abstraite factorise les comportements communs aux tableaux

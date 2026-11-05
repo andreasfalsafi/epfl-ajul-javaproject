@@ -27,8 +27,6 @@ import static ch.epfl.ajul.Game.PlayerDescription.PlayerKind.HUMAN;
 public final class TestStage10 extends Application {
     @Override
     public void start(Stage primaryStage) {
-        // … comme `TestBoardUI`, mais `gameStateP` a le type
-        //   `ObjectProperty<…>`, pas `ObservableValue<…>`.
         int playersCount = 4;
         Game game = new Game(PlayerId.ALL.stream()
                 .map(pId ->
@@ -50,8 +48,6 @@ public final class TestStage10 extends Application {
                 potentialMoves,
                 moveAccepted,
                 moveQueue);
-//        boardUI.showBonusPoints(PlayerId.P2, TileDestination.Pattern.PATTERN_3);
-
 
 
 
@@ -73,7 +69,7 @@ public final class TestStage10 extends Application {
                     .create(2026));
             ImmutableGameState immutableGameState =
                     gameState.immutable();
-            // TODO remplir `validMoves` avec les coups valides.
+
             short[] allValidPkMoves = new short[216];
             int howMuch = immutableGameState.validMoves(allValidPkMoves);
             for(int i = 0; i < howMuch; i++){
@@ -84,7 +80,6 @@ public final class TestStage10 extends Application {
         });
 
         root.getStylesheets().add("ajul.css");
-        // … comme `TestBoardUI`
         primaryStage.setScene(new Scene(root));
         primaryStage.setTitle(TestBoardUI.class.getSimpleName());
         primaryStage.show();

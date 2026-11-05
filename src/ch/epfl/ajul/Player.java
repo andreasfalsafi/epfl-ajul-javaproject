@@ -1,7 +1,6 @@
 package ch.epfl.ajul;
 
 import ch.epfl.ajul.gamestate.ReadOnlyGameState;
-import ch.epfl.ajul.intarray.ReadOnlyIntArray;
 
 /**
  * Représente un joueur dans une partie d'Ajul.
@@ -9,8 +8,8 @@ import ch.epfl.ajul.intarray.ReadOnlyIntArray;
  * <p>Cette interface est annotée avec {@link FunctionalInterface}, permettant
  * de définir des joueurs via des expressions lambda ou des références de méthodes.
  *
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 @FunctionalInterface
 public interface Player {

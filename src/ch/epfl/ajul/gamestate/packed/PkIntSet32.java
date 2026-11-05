@@ -4,8 +4,8 @@ package ch.epfl.ajul.gamestate.packed;
  * Contient des méthodes statiques permettant de manipuler des ensembles d'entiers
  * compris entre 0 et 31 (inclus), empaquetés dans une valeur de type int.
  *
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public final class PkIntSet32 {
 

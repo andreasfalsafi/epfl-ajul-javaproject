@@ -19,8 +19,8 @@ import java.util.Objects;
  * @param pkUniqueTileSources l'ensemble empaqueté des index des sources uniques
  * @param pkPlayerStates le tableau immuable des états empaquetés des joueurs
  * @param currentPlayerId l'identité du joueur courant
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public record ImmutableGameState(Game game, int pkTileBag, ImmutableIntArray pkTileSources, int pkUniqueTileSources, ImmutableIntArray pkPlayerStates, PlayerId currentPlayerId) implements ReadOnlyGameState {
 

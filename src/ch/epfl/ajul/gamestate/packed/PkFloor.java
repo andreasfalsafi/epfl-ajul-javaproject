@@ -9,8 +9,8 @@ import java.util.StringJoiner;
  * Contient des méthodes statiques permettant de manipuler le contenu d'une ligne plancher
  * empaquetée dans un entier de type int.
  *
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public final class PkFloor {
 
@@ -137,7 +137,7 @@ public final class PkFloor {
 
         int result = PkTileSet.EMPTY;
         for(int i = 0; i < size(pkFloor); i++) {
-           result = PkTileSet.add(result, tileAt(pkFloor, i));
+            result = PkTileSet.add(result, tileAt(pkFloor, i));
         }
         return result;
     }
@@ -149,15 +149,13 @@ public final class PkFloor {
      * @param pkFloor la ligne plancher empaquetée
      * @return la chaîne de caractères représentant la ligne plancher
      */
-     public static String toString(int pkFloor){
-         assert isValid(pkFloor);
+    public static String toString(int pkFloor){
+        assert isValid(pkFloor);
 
-         StringJoiner j = new StringJoiner(", ", "[", "]");
-         for (int i = 0; i < size(pkFloor); i++){
-             j.add(tileAt(pkFloor, i).toString());
-       }
-         return j.toString();
-     }
-
-
+        StringJoiner j = new StringJoiner(", ", "[", "]");
+        for (int i = 0; i < size(pkFloor); i++){
+            j.add(tileAt(pkFloor, i).toString());
+        }
+        return j.toString();
+    }
 }

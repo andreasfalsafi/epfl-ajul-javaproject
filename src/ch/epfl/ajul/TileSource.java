@@ -8,8 +8,8 @@ import java.util.List;
  * Cette interface scellée définit les emplacements où les joueurs peuvent puiser des tuiles.
  * Elle est implémentée par {@link CenterArea} et {@link Factory}.
  *
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public sealed interface TileSource {
 

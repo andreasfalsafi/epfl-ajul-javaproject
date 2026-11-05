@@ -8,43 +8,25 @@ import ch.epfl.ajul.TileSource;
  * Classe utilitaire permettant de manipuler des coups (moves) empaquetés
  * dans des entiers de type {@code short} (16 bits).
  *
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public final class PkMove {
 
-    // --- Définition des masques et décalages ---
+    // --- Constantes pour la SOURCE (4 bits) ---
     private static final int SOURCE_OFFSET = 0;
     private static final int SOURCE_BITS = 4;
     private static final int SOURCE_MASK = (1 << SOURCE_BITS) - 1;
 
+    // --- Constantes pour la COULEUR (3 bits) ---
     private static final int COLOR_OFFSET = SOURCE_OFFSET + SOURCE_BITS;
-
     private static final int COLOR_BITS = 3;
     private static final int COLOR_MASK = ((1 << COLOR_BITS) - 1) << COLOR_OFFSET;
 
+    // --- Constantes pour la DESTINATION (3 bits) ---
     private static final int DESTINATION_OFFSET = COLOR_OFFSET + COLOR_BITS;
-
     private static final int DESTINATION_BITS = 3;
     private static final int DESTINATION_MASK = ((1 << DESTINATION_BITS) - 1) << DESTINATION_OFFSET;
-
-
-
-    private static boolean isValid(short pkMove){
-        // creation des variables
-        int source = pkMove & SOURCE_MASK;
-        int color = (pkMove & COLOR_MASK) >>> COLOR_OFFSET;
-        int destination = (pkMove & DESTINATION_MASK) >>> DESTINATION_OFFSET;
-
-        // verification des bornes
-        if (source >= TileSource.COUNT) return false;      // 10 sources max (0 à 9)
-        if (color >= TileKind.Colored.COUNT) return false;       // 5 couleurs max (0 à 4)
-        if (destination >= TileDestination.COUNT) return false; // 6 destinations max (0 à 5)
-
-        // verification des 6 bits de poids fort (ils doivent etre à 0)
-        // Short.toUnsignedInt evite les problèmes de signe si le premier bit est 1
-        return (Short.toUnsignedInt(pkMove) >>> 10) == 0;
-    }
 
     /**
      * Empaquète les informations d'un coup dans un entier de type {@code short}.
@@ -98,6 +80,19 @@ public final class PkMove {
         assert isValid(pkMove);
         int destIndex = (pkMove & DESTINATION_MASK) >>> DESTINATION_OFFSET;
         return TileDestination.ALL.get(destIndex);
+    }
+
+    private static boolean isValid(short pkMove) {
+        int source = (pkMove & SOURCE_MASK) >>> SOURCE_OFFSET;
+        int color = (pkMove & COLOR_MASK) >>> COLOR_OFFSET;
+        int destination = (pkMove & DESTINATION_MASK) >>> DESTINATION_OFFSET;
+
+        if (source >= TileSource.COUNT) return false;
+        if (color >= TileKind.Colored.COUNT) return false;
+        if (destination >= TileDestination.COUNT) return false;
+
+        // Vérification des 6 bits de poids fort (ils doivent être à 0)
+        return (Short.toUnsignedInt(pkMove) >>> 10) == 0;
     }
 
 

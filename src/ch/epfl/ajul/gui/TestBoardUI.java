@@ -47,9 +47,6 @@ public final class TestBoardUI extends Application {
         Parent root = new StackPane(boardUI.root());
         root.getStylesheets().add("ajul.css");
 
-//        boardUI.showBonusPoints(PlayerId.P2, TileDestination.Pattern.PATTERN_3);
-
-
         primaryStage.setScene(new Scene(root));
         primaryStage.setTitle(TestBoardUI.class.getSimpleName());
         primaryStage.show();

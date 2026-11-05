@@ -1,8 +1,8 @@
 package ch.epfl.ajul.intarray;
 
 /**
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  * Représente un tableau d'entiers en lecture seule.
  * <p>
  * Cette interface définit les opérations permettant d'accéder aux éléments

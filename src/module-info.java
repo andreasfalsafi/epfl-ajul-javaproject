@@ -5,7 +5,6 @@ module Ajul {
     requires java.net.http;
     requires java.xml;
     requires java.desktop;
-//    requires Ajul;
     exports ch.epfl.ajul.gui;
     exports ch.epfl.ajul.intarray;
     exports ch.epfl.ajul;

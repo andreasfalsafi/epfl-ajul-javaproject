@@ -1,8 +1,8 @@
 package ch.epfl.ajul.intarray;
 
 /**
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  * Une implémentation immuable d'un tableau d'entiers.
  * <p>
  * Une fois créée, le contenu de cette classe ne peut plus être modifié.

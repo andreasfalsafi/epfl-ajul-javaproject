@@ -9,8 +9,8 @@ import ch.epfl.ajul.intarray.ReadOnlyIntArray;
  * Contient des méthodes statiques permettant de manipuler les états empaquetés
  * de tous les joueurs d'une partie d'Ajul, stockés dans un tableau.
  *
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public final class PkPlayerStates {
 

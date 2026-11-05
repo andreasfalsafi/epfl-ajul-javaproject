@@ -2,8 +2,8 @@ package ch.epfl.ajul;
 
 /**
  * Classe utilitaire facilitant l'écriture et la vérification des préconditions.
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public final class Preconditions {
 

@@ -9,29 +9,33 @@ import java.util.StringJoiner;
  * Contient des méthodes statiques permettant de manipuler le mur d'un joueur,
  * représenté de manière empaquetée dans un entier de type int (25 bits utilisés).
  *
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public final class PkWall {
 
     /**
      * Représente le mur vide (aucun bit n'est à 1).
      */
-    public static final int EMPTY = 0;
+    public static final int EMPTY = PkIntSet32.EMPTY;
 
     /**
      * La largeur du mur (nombre de colonnes).
      */
-    public static final int WALL_WIDTH = 5;
+    public static final int WALL_WIDTH = TileKind.Colored.COUNT;
 
     /**
      * La hauteur du mur (nombre de lignes).
      */
-    public static final int WALL_HEIGHT = 5;
+    public static final int WALL_HEIGHT = TileDestination.Pattern.COUNT;
 
-    // Masque pour extraire 5 bits (une ligne ou une colonne)
-    private static final int MASK = 0b11111;
+    // Masque pour une ligne pleine (5 bits à 1)
+    private static final int FULL_ROW_MASK = 0b11111;
 
+    // Masque pour une colonne pleine (bits 0, 5, 10, 15, 20)
+    private static final int FULL_COLUMN_MASK = 0b00001_00001_00001_00001_00001;
+
+    /*
     private static final int A_COLOR_MASK = 0b0000000_10000_01000_00100_00010_00001;
     private static final int B_COLOR_MASK = 0b0000000_00001_10000_01000_00100_00010;
     private static final int C_COLOR_MASK = 0b0000000_00010_00001_10000_01000_00100;
@@ -45,6 +49,8 @@ public final class PkWall {
             D_COLOR_MASK,
             E_COLOR_MASK
     };
+
+     */
 
     private static boolean isValid(int pkWall){
         return pkWall >>> 25 == 0;
@@ -115,53 +121,6 @@ public final class PkWall {
     }
 
     /**
-     * Calcule la taille d'un groupe de bits adjacents valant 1 autour d'une position donnée.
-     *
-     * @param bitSequence la séquence de bits à analyser
-     * @param bitPosition la position de départ
-     * @param bitSequenceLength la longueur totale de la séquence analysée
-     * @return le nombre de bits adjacents valant 1 (incluant la position de départ)
-     */
-    private static int adjacentBits(int bitSequence, int bitPosition, int bitSequenceLength){
-        int adjacentBitSize = 0;
-
-        //si la case de départ est vide, le groupe est de taille 0
-        if ((bitSequence & (1 << bitPosition)) == 0) {
-            // on pourrait return adjacent bit size,mais je trouve que c'est plus lisible ainsi dans ce cas
-            return 0;
-        }
-        //partie droite
-        for(int i = bitPosition; i >= 0; i--){
-            if((bitSequence & (1 << i)) != 0){
-                adjacentBitSize++;
-            }
-            else {break;}
-        }
-        //partie gauche
-        //bitposition+1 car on compte pas le bit en question
-        for(int j = bitPosition + 1; j < bitSequenceLength; j++){
-            if((bitSequence&(1 << j)) != 0){
-                adjacentBitSize++;
-            }
-            else{break;}
-        }
-        return adjacentBitSize;
-    }
-
-    /**
-     * Extrait les 5 bits correspondant à une ligne spécifique du mur.
-     *
-     * @param pkWall le mur empaqueté
-     * @param line la ligne à extraire
-     * @return un entier dont les 5 bits de poids faible représentent la ligne
-     */
-    private static int rowBits(int pkWall, TileDestination.Pattern line){
-        assert isValid(pkWall);
-
-        return (pkWall >>> (WALL_WIDTH * line.index())) & MASK;
-    }
-
-    /**
      * Extrait les 5 bits correspondant à une colonne spécifique du mur.
      *
      * @param pkWall le mur empaqueté
@@ -188,8 +147,9 @@ public final class PkWall {
      */
     public static int hGroupSize(int pkWall, TileDestination.Pattern line, TileKind.Colored color){
         assert isValid(pkWall);
+        int rowBits = (pkWall >>> (WALL_WIDTH * line.index())) & FULL_ROW_MASK;
 
-        return adjacentBits(rowBits(pkWall, line),column(line, color), WALL_WIDTH);
+        return adjacentBits(rowBits, column(line, color), WALL_WIDTH);
     }
 
     /**
@@ -223,63 +183,61 @@ public final class PkWall {
     }
 
     /**
-     * Retourne vrai si et seulement si la ligne spécifiée du mur est complètement pleine.
+     * Retourne vrai si la ligne spécifiée du mur est complètement pleine.
+     * Utilise {@link PkIntSet32#containsAll(int, int)}.
      *
      * @param pkWall le mur empaqueté
-     * @param line la ligne à vérifier
+     * @param line   la ligne à vérifier
      * @return true si la ligne est pleine, false sinon
      */
-    public static boolean isRowFull(int pkWall, TileDestination.Pattern line){
-        //le MASK ici est plus utilisé en tant que "full"
+    public static boolean isRowFull(int pkWall, TileDestination.Pattern line) {
         assert isValid(pkWall);
-
-        return rowBits(pkWall, line) == MASK;
+        int rowMask = FULL_ROW_MASK << (WALL_WIDTH * line.index());
+        return PkIntSet32.containsAll(pkWall, rowMask);
     }
 
     /**
-     * Retourne vrai si et seulement si la colonne spécifiée du mur est complètement pleine.
+     * Retourne vrai si la colonne spécifiée du mur est complètement pleine.
+     * Utilise {@link PkIntSet32#containsAll(int, int)}.
      *
      * @param pkWall le mur empaqueté
      * @param column l'index de la colonne à vérifier
      * @return true si la colonne est pleine, false sinon
      */
-    public static boolean isColumnFull(int pkWall,int column){
+    public static boolean isColumnFull(int pkWall, int column) {
         assert isValid(pkWall);
-
-        return columnBits(pkWall, column) == MASK;
+        assert column >= 0 && column < WALL_WIDTH;
+        int colMask = FULL_COLUMN_MASK << column;
+        return PkIntSet32.containsAll(pkWall, colMask);
     }
 
-
     /**
-     * Retourne vrai si et seulement si toutes les cases de la couleur spécifiée sont pleines.
+     * Retourne vrai si toutes les cases de la couleur spécifiée sont pleines.
+     * Utilise {@link PkIntSet32#containsAll(int, int)}.
      *
      * @param pkWall le mur empaqueté
-     * @param color la couleur à vérifier
+     * @param color  la couleur à vérifier
      * @return true si les 5 tuiles de cette couleur sont sur le mur, false sinon
      */
-    public static boolean isColorFull(int pkWall, TileKind.Colored color){
+    public static boolean isColorFull(int pkWall, TileKind.Colored color) {
         assert isValid(pkWall);
-
-        return (pkWall & COLOR_MASKS[color.index()]) == COLOR_MASKS[color.index()];
+        return PkIntSet32.containsAll(pkWall, colorMask(color));
     }
 
 
     /**
-     * Retourne l'ensemble de tuiles empaqueté constitué de toutes les tuiles
-     * se trouvant sur le mur.
+     * Retourne l'ensemble de tuiles empaqueté constitué de toutes les tuiles se trouvant sur le mur.
      *
      * @param pkWall le mur empaqueté
      * @return l'ensemble de tuiles empaqueté correspondant
      */
     public static int asPkTileSet(int pkWall) {
         assert isValid(pkWall);
+        int pkTileSetResult = PkTileSet.EMPTY;
 
-        int pkTileSetResult = 0;
-        for(TileKind.Colored color : TileKind.Colored.ALL){
-            int numberOfSaidColorInWall = Integer.bitCount(pkWall&COLOR_MASKS[color.index()]);
-            int thisColorPkTileSet = PkTileSet.of(numberOfSaidColorInWall, color);
-
-            pkTileSetResult = PkTileSet.union(pkTileSetResult, thisColorPkTileSet);
+        for (TileKind.Colored color : TileKind.Colored.ALL) {
+            int numberOfColor = Integer.bitCount(pkWall & colorMask(color));
+            pkTileSetResult = PkTileSet.union(pkTileSetResult, PkTileSet.of(numberOfColor, color));
         }
         return pkTileSetResult;
     }
@@ -311,6 +269,42 @@ public final class PkWall {
             j.add(b);
         }
         return j.toString();
+    }
+
+    /**
+     * Retourne le masque correspondant aux 5 cases d'une couleur donnée dans le mur.
+     */
+    private static int colorMask(TileKind.Colored color) {
+        return switch (color) {
+            case A -> 0b0000000_10000_01000_00100_00010_00001;
+            case B -> 0b0000000_00001_10000_01000_00100_00010;
+            case C -> 0b0000000_00010_00001_10000_01000_00100;
+            case D -> 0b0000000_00100_00010_00001_10000_01000;
+            case E -> 0b0000000_01000_00100_00010_00001_10000;
+        };
+    }
+    /**
+     * Calcule la taille d'un groupe de bits adjacents valant 1 autour d'une position donnée.
+     * La logique de comptage directionnel a été extraite pour éviter la duplication.
+     */
+    private static int adjacentBits(int bitSequence, int bitPosition, int maxLength) {
+        if ((bitSequence & (1 << bitPosition)) == 0) return 0;
+
+        // Taille initiale à 1 (inclut le bit à la position actuelle)
+        return 1 + countAdjacentDirectional(bitSequence, bitPosition, -1, 0)
+                + countAdjacentDirectional(bitSequence, bitPosition, 1, maxLength - 1);
+    }
+
+    /**
+     * Compte le nombre de bits consécutifs à 1 dans une direction donnée (-1 ou +1).
+     */
+    private static int countAdjacentDirectional(int bitSequence, int startPos, int step, int bound) {
+        int count = 0;
+        for (int i = startPos + step; (step > 0 ? i <= bound : i >= bound); i += step) {
+            if ((bitSequence & (1 << i)) != 0) count++;
+            else break;
+        }
+        return count;
     }
 
 }

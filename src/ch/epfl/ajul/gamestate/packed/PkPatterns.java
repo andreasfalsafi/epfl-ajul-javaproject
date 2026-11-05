@@ -8,8 +8,8 @@ import java.util.StringJoiner;
 /**
  * Contient des méthodes statiques permettant de manipuler le contenu des lignes de motif d'un joueur,
  * représenté de manière empaquetée.
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public final class PkPatterns {
 
@@ -18,33 +18,16 @@ public final class PkPatterns {
      */
     public static final int EMPTY = 0;
 
-    // Le masque représentant les bits d'une ligne de PkPattern (le nombre de tuile (3 bits) + l'index de la couleur (3 bits))
-    private static final int LINE_MASK = 0b111111;
+    // --- Constantes structurelles pour une ligne ---
+    private static final int COUNT_BITS = 3;
+    private static final int COUNT_OFFSET = 0;
+    private static final int COUNT_MASK = (1 << COUNT_BITS) - 1;
 
-    //le nombre de tuile ou l'index des tuiles est représentée par 3 bits.
-    private static final int MASK = 0b111;
+    private static final int COLOR_BITS = 3;
+    private static final int COLOR_OFFSET = COUNT_OFFSET + COUNT_BITS;
+    private static final int COLOR_MASK = ((1 << COLOR_BITS) - 1) << COLOR_OFFSET;
 
-    // Le nombre de bits de décalage nécessaire pour changer de ligne dans un PkPattern.
-    private static final int LINE_OFFSET = 6;
-
-    // Difference de bits entre chaque info dans un pkpattern (entre le nombre et la couleur).
-    private static final int INFO_OFFSET = 3;
-
-
-    private static boolean isValid(int pkPatterns){
-        if ((pkPatterns >>> 30) != 0) {
-            return false;
-        }
-        for (TileDestination.Pattern line : TileDestination.Pattern.ALL){
-            int assertSize = (pkPatterns >>> (LINE_OFFSET * line.index())) & MASK;
-            int assertColor = (pkPatterns >>> ((LINE_OFFSET * line.index()) + INFO_OFFSET)) & MASK;
-
-            if (assertSize > line.capacity()) return false;
-            if (assertColor >= TileKind.Colored.ALL.size()) return false; //no firstplayermarker in a pkpattern
-            if (assertSize == 0 && assertColor != 0) return false;
-        }
-        return true;
-    }
+    private static final int LINE_BITS = COUNT_BITS + COLOR_BITS; // 6 bits par ligne
 
     /**
      * Retourne le nombre de tuiles présentes sur la ligne de motif donnée des lignes de motif empaquetées.
@@ -54,10 +37,9 @@ public final class PkPatterns {
      * @return le nombre de tuiles présentes sur la ligne
      */
     public static int size(int pkPatterns, TileDestination.Pattern line){
-         assert isValid(pkPatterns);
-
-        return (pkPatterns >>> (LINE_OFFSET * line.index())) & MASK;
-    }
+        assert isValid(pkPatterns);
+        int lineShift = line.index() * LINE_BITS;
+        return (pkPatterns >>> (lineShift + COUNT_OFFSET)) & COUNT_MASK;    }
 
     /**
      * Retourne la couleur des tuiles présentes sur la ligne de motif donnée des lignes de motif empaquetées.
@@ -66,12 +48,13 @@ public final class PkPatterns {
      * @param line la ligne de motif ciblée
      * @return la couleur des tuiles présentes sur la ligne
      */
-    public static TileKind.Colored color(int pkPatterns, TileDestination.Pattern line){
+    public static TileKind.Colored color(int pkPatterns, TileDestination.Pattern line) {
         assert isValid(pkPatterns);
         assert size(pkPatterns, line) > 0;
 
-        int indexOfColor = pkPatterns >>> ((LINE_OFFSET * line.index()) + INFO_OFFSET) & MASK;
-        return TileKind.Colored.ALL.get(indexOfColor);
+        int lineShift = line.index() * LINE_BITS;
+        int colorIndex = (pkPatterns >>> (lineShift + COLOR_OFFSET)) & COUNT_MASK;
+        return TileKind.Colored.ALL.get(colorIndex);
     }
 
 
@@ -82,10 +65,9 @@ public final class PkPatterns {
      * @param line la ligne de motif à vérifier
      * @return true si la ligne contient le nombre maximum de tuiles qu'elle peut contenir, false sinon
      */
-    public static boolean isFull(int pkPatterns, TileDestination.Pattern line){
+    public static boolean isFull(int pkPatterns, TileDestination.Pattern line) {
         assert isValid(pkPatterns);
-
-        return (size(pkPatterns, line) == line.capacity());
+        return size(pkPatterns, line) == line.capacity();
     }
 
     /**
@@ -97,11 +79,10 @@ public final class PkPatterns {
      * @param color la couleur des tuiles à vérifier
      * @return true si la ligne est vide ou si elle contient déjà des tuiles de cette couleur, false sinon
      */
-    public static boolean canContain(int pkPatterns, TileDestination.Pattern line, TileKind.Colored color){
+    public static boolean canContain(int pkPatterns, TileDestination.Pattern line, TileKind.Colored color) {
         assert isValid(pkPatterns);
-
         if (size(pkPatterns, line) == 0) return true;
-        return color(pkPatterns, line) == color ;
+        return color(pkPatterns, line) == color;
     }
 
 
@@ -115,21 +96,22 @@ public final class PkPatterns {
      * @param color la couleur des tuiles ajoutées
      * @return les nouvelles lignes de motif empaquetées
      */
-    public static int withAddedTiles(int pkPatterns, TileDestination.Pattern line, int tileCount, TileKind.Colored color){
+    public static int withAddedTiles(int pkPatterns, TileDestination.Pattern line, int tileCount, TileKind.Colored color) {
         assert isValid(pkPatterns);
         assert canContain(pkPatterns, line, color);
-        assert(size(pkPatterns, line) + tileCount <= line.capacity());
+        assert size(pkPatterns, line) + tileCount <= line.capacity();
 
-        if (tileCount == 0){
-            return pkPatterns;
+        if (tileCount == 0) return pkPatterns;
+
+        int lineShift = line.index() * LINE_BITS;
+
+        if (size(pkPatterns, line) > 0) {
+            return pkPatterns + (tileCount << (lineShift + COUNT_OFFSET));
+        } else {
+            int newColorBits = color.index() << COLOR_OFFSET;
+            int newCountBits = tileCount << COUNT_OFFSET;
+            return pkPatterns | ((newColorBits | newCountBits) << lineShift);
         }
-        else if(size(pkPatterns, line) > 0){
-            pkPatterns = pkPatterns + (tileCount << LINE_OFFSET * line.index());
-        }
-        else {
-            pkPatterns = pkPatterns + (((color.index() << INFO_OFFSET) + tileCount) << LINE_OFFSET * line.index());
-        }
-        return pkPatterns;
     }
 
     /**
@@ -140,13 +122,11 @@ public final class PkPatterns {
      * @param line la ligne de motif à vider
      * @return les nouvelles lignes de motif empaquetées
      */
-    public static int withEmptyLine(int pkPatterns, TileDestination.Pattern line){
+    public static int withEmptyLine(int pkPatterns, TileDestination.Pattern line) {
         assert isValid(pkPatterns);
-
-        int shift = line.index() * LINE_OFFSET;
-
-        // Remplacement des soustractions par l'application d'un masque inversé (très concis et standard)
-        return pkPatterns & ~(LINE_MASK << shift);
+        int lineShift = line.index() * LINE_BITS;
+        int lineMask = (COUNT_MASK | COLOR_MASK) << lineShift;
+        return pkPatterns & ~lineMask;
     }
 
     /**
@@ -191,6 +171,21 @@ public final class PkPatterns {
             j.add(tiles + dots);
         }
         return j.toString();
+    }
+
+    private static boolean isValid(int pkPatterns) {
+        if ((pkPatterns >>> 30) != 0) return false;
+
+        for (TileDestination.Pattern line : TileDestination.Pattern.ALL) {
+            int lineShift = line.index() * LINE_BITS;
+            int assertSize = (pkPatterns >>> (lineShift + COUNT_OFFSET)) & COUNT_MASK;
+            int assertColor = (pkPatterns >>> (lineShift + COLOR_OFFSET)) & (COUNT_MASK);
+
+            if (assertSize > line.capacity()) return false;
+            if (assertColor >= TileKind.Colored.ALL.size()) return false;
+            if (assertSize == 0 && assertColor != 0) return false;
+        }
+        return true;
     }
 
 }

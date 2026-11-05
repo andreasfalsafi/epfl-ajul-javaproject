@@ -9,8 +9,6 @@ import ch.epfl.ajul.gamestate.packed.PkPatterns;
 import ch.epfl.ajul.gamestate.packed.PkPlayerStates;
 import ch.epfl.ajul.gamestate.packed.PkTileSet;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.random.RandomGenerator;
 
 
@@ -19,8 +17,8 @@ import java.util.random.RandomGenerator;
  * Cette classe partitionne les coups valides en trois groupes basés sur leur capacité
  * à compléter des lignes de motif, afin de favoriser un jeu quasi-aléatoire mais structuré.
  *
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public final class HeuristicMoveSelector {
 

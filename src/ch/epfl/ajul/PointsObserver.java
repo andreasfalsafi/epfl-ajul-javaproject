@@ -4,8 +4,8 @@ package ch.epfl.ajul;
  * Représente un observateur de points.
  * Cet objet est informé chaque fois que les points d'un joueur changent.
  * Ses méthodes sont appelées par le jeu lorsque cela se produit.
- * @author morganhauswirth 417840
- * @author andreasfalsafi 417792
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
  */
 public interface PointsObserver {
 

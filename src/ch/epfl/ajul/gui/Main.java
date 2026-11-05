@@ -4,105 +4,88 @@ import ch.epfl.ajul.*;
 import ch.epfl.ajul.gamestate.ImmutableGameState;
 import ch.epfl.ajul.gamestate.Move;
 import ch.epfl.ajul.gamestate.MutableGameState;
-import ch.epfl.ajul.gamestate.ReadOnlyGameState;
-import ch.epfl.ajul.gamestate.packed.PkMove;
 import ch.epfl.ajul.mcts.MctsPlayer;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import javafx.util.Pair;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.random.RandomGenerator;
 import java.util.random.RandomGeneratorFactory;
 
-import static java.lang.Thread.sleep;
-
+/**
+ * Classe principale de l'application Ajul.
+ *
+ * <p>Cette classe orchestre le cycle de vie complet de l'application :
+ * <ul>
+ * <li>Analyse les arguments de ligne de commande pour configurer les joueurs (Humain/IA).</li>
+ * <li>Initialise l'interface graphique JavaFX (graphe de scène).</li>
+ * <li>Démarre le fil d'exécution dédié à la logique de jeu (Virtual Thread).</li>
+ * <li>Gère la synchronisation entre le thread JavaFX et le thread logique via {@link javafx.application.Platform#runLater}.</li>
+ * </ul>
+ *
+ * @author Morgan Hauswirth (417840)
+ * @author Andreas Falsafi (417792)
+ */
 public final class Main extends Application {
     private static final int NUM_RANDOM_GEN_BYTES = 8;
     private static final int MCTS_NUM_SIM = 100_000;
 
+    /**
+     * Initialise et affiche la fenêtre principale, configure les joueurs et lance
+     * le fil d'exécution gérant la partie.
+     *
+     * @param primaryStage la fenêtre principale de l'application JavaFX.
+     * @throws Exception si une erreur survient lors de l'initialisation.
+     */
     @Override
     public void start(Stage primaryStage) throws Exception {
 
-        //todo CLAIREMENT UN PROBLèME AVEC LES PATTERNS
-        //analyser les arguments passés au programme afin de configurer la partie
+        // 1. Analyse des arguments passés au programme
         Application.Parameters parameters = getParameters();
-
-        //puisque les joueurs sont les arguments non-nommées, la taille de la lsiter des arguments non-nommé est égal au nombre de joueur
         List<String> playerNames = parameters.getUnnamed();
-
-        //démarrer le fil d'éxécution gérant la partie
-        SynchronousQueue<Move> javaFXMoves = new SynchronousQueue<>();
-        //set de moves communiquable entre les deux threads
-        Set<Move> validMoves =
-                Collections.synchronizedSet(new HashSet<>());
-
         int numPlayers = playerNames.size();
 
         if (numPlayers < 2 || numPlayers > 4) {
             throw new Error("too many players");
         }
+
         String seed = parameters.getNamed().get("seed");
+        byte[] byteSeed = (seed != null)
+                ? seed.getBytes(StandardCharsets.UTF_8)
+                : SecureRandom.getSeed(NUM_RANDOM_GEN_BYTES);
 
-        byte[] byteSeed;
-        //seeded aléatoire
-        if (!(seed == null)) {
-            byteSeed = seed.getBytes();
-        }
-        //vraiment aléatoire
-        else {
-            byteSeed = SecureRandom.getSeed(NUM_RANDOM_GEN_BYTES);
-        }
-
-
-
-        //créer Game
-        List<Game.PlayerDescription> playerDescriptions = new ArrayList<>();
-        int playerId = 0;
-        for(String players : playerNames){
-            String playerNameTemp = players;
-            Game.PlayerDescription.PlayerKind playerKind = Game.PlayerDescription.PlayerKind.HUMAN;
-            if(players.charAt(0) == '_'){
-                playerKind = Game.PlayerDescription.PlayerKind.AI;
-                //starts at one (1) to remove the first "_"
-                playerNameTemp = playerNameTemp.substring(1);
-            }
-            playerDescriptions.add(new Game.PlayerDescription(PlayerId.ALL.get(playerId++), playerNameTemp, playerKind ));
-        }
-
+        // 2. Création des joueurs
+        final List<Game.PlayerDescription> playerDescriptions = getPlayerDescriptions(playerNames);
 
         Game currentGame = new Game(playerDescriptions);
-
         ImmutableGameState initial = ImmutableGameState.initial(currentGame);
 
-
-        //construire l'interface graphique principale
-
+        // 3. Construction de l'interface graphique
         ObjectProperty<ImmutableGameState> gameStateP = new SimpleObjectProperty<>(initial);
         boolean[] movePlayed = new boolean[1];
-        Tiles tiles = Tiles.create(currentGame);
+
         Set<Move> potentialMoves = new HashSet<>();
+        SynchronousQueue<Move> javaFXMoves = new SynchronousQueue<>();
+        Set<Move> validMoves = Collections.synchronizedSet(new HashSet<>());
+
+        Tiles tiles = Tiles.create(currentGame);
         BoardUI board = BoardUI.create(tiles.anchors(), gameStateP, potentialMoves, movePlayed, javaFXMoves);
         TileOverlayUI overlay = TileOverlayUI.create(gameStateP, tiles, validMoves, potentialMoves, movePlayed);
-        StackPane graphicalUI = new StackPane();
 
-        //TODO not sure on getSyleSheets, is it getstyleclass or setId or smth?
+        StackPane graphicalUI = new StackPane(board.root(), overlay.root());
         graphicalUI.getStylesheets().add("ajul.css");
-        graphicalUI.getChildren().add(board.root());
-        graphicalUI.getChildren().add(overlay.root());
 
         primaryStage.setScene(new Scene(graphicalUI));
+        primaryStage.setTitle("Ajul");
+        primaryStage.setResizable(false);
 
         PointsObserver gamePointsObserver = new PointsObserver() {
             @Override
@@ -124,43 +107,37 @@ public final class Main extends Application {
             public void fullRow(PlayerId playerId, TileDestination.Pattern line, int points) {
                 board.showBonusPoints(playerId, line);            }
         };
-        primaryStage.setTitle("Ajul");
-        primaryStage.setResizable(false);
 
-        //toute la gérance de game
+        // 4. Lancement du fil d'exécution gérant la partie
         Thread.startVirtualThread(() -> {
-//            ImmutableGameState initial = ImmutableGameState.initial(currentGame);
-
-
             MutableGameState gameState = new MutableGameState(initial, gamePointsObserver);
             short[] validMovesArray = new short[Move.MAX_MOVES];
-//            ImmutableGameState immutableGameState = gameState.immutable();
-//            Platform.runLater(() -> gameStateP.set(immutableGameState));
 
             MctsPlayer bot = new MctsPlayer(RandomGeneratorFactory.getDefault(), MCTS_NUM_SIM);
             RandomGenerator rng = RandomGeneratorFactory.getDefault().create(byteSeed);
 
             gameState.fillFactories(rng);
-            Platform.runLater(() -> gameStateP.set(gameState.immutable()));
+            //todo he said Updateview
+            updateView(gameState, gameStateP);
 
             while (!gameState.isGameOver()){
 
                 if (gameState.isRoundOver()) {
-                    try {
-                        sleep(1000);
-                    } catch (InterruptedException e) {
-                        throw new Error(e);
-                    }
+                    sleepFor(1000);
                     gameState.endRound();
-                    Platform.runLater(() -> gameStateP.set(gameState.immutable()));
-                    try {
-                        sleep(700);
-                    } catch (InterruptedException e) {
-                        throw new Error(e);
-                    }
-                    gameState.fillFactories(rng);
-                    Platform.runLater(() -> gameStateP.set(gameState.immutable()));
+                    updateView(gameState, gameStateP);
 
+                    sleepFor(700);
+
+                    if (!gameState.isGameOver()) {
+                        gameState.fillFactories(rng);
+                        updateView(gameState, gameStateP);
+                    }
+
+                }
+
+                if (gameState.isGameOver()) {
+                    break;
                 }
 
                 short nextMove;
@@ -182,22 +159,55 @@ public final class Main extends Application {
                     nextMove = bot.nextMove(gameState);
                 }
                 gameState.registerMove(nextMove);
-                Platform.runLater(() -> gameStateP.set(gameState.immutable()));
+                updateView(gameState, gameStateP);
             }
 
-            //TODO ya plus là
             gameState.endGame();
-            Platform.runLater(() -> gameStateP.set(gameState.immutable()));
-
-
-
+            updateView(gameState, gameStateP);
         });
 
         primaryStage.show();
-
-
     }
 
+    private static List<Game.PlayerDescription> getPlayerDescriptions(List<String> playerNames) {
+        List<Game.PlayerDescription> playerDescriptions = new ArrayList<>();
+        int playerId = 0;
+
+        for(String players : playerNames){
+            String playerName = players;
+            Game.PlayerDescription.PlayerKind kind = Game.PlayerDescription.PlayerKind.HUMAN;
+            if(players.startsWith("_")){
+                kind = Game.PlayerDescription.PlayerKind.AI;
+                playerName= playerName.substring(1);
+            }
+            playerDescriptions.add(new Game.PlayerDescription(PlayerId.ALL.get(playerId++), playerName, kind ));
+        }
+        return playerDescriptions;
+    }
+
+    /**
+     * Met à jour l'interface graphique de manière sécurisée depuis le fil d'exécution de la partie.
+     */
+    private static void updateView(MutableGameState state, ObjectProperty<ImmutableGameState> stateProperty) {
+        ImmutableGameState immutableState = state.immutable();
+        Platform.runLater(() -> stateProperty.set(immutableState));
+    }
+
+    /**
+     * Suspend le fil d'exécution de la partie pour la durée spécifiée.
+     */
+    private static void sleepFor(int millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            throw new Error(e);
+        }
+    }
+    /**
+     * Point d'entrée de l'application Java.
+     *
+     * @param args arguments de la ligne de commande.
+     */
     public static void main(String[] args) {
         launch(args);
     }
