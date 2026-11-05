@@ -4,3 +4,12 @@
 
 # Submit.java
 /submissions/
+
+# macOS
+.DS_Store
+
+# IDE files
+.classpath
+.project
+*.iml
+*.eml
